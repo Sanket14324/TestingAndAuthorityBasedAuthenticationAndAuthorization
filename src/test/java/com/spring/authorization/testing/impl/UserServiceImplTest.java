@@ -3,6 +3,7 @@ package com.spring.authorization.testing.impl;
 
 import com.spring.authorization.testing.model.User;
 import com.spring.authorization.testing.repository.UserRepository;
+import com.spring.authorization.testing.service.impl.JWTService;
 import com.spring.authorization.testing.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,8 @@ class UserServiceImplTest {
     @Mock
     PasswordEncoder passwordEncoder;
 
+    @Mock
+    JWTService jwtService;
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -187,23 +190,30 @@ class UserServiceImplTest {
         existingUser.setName("Fake name");
         existingUser.setEmail("fake@gmail.com");
         existingUser.setPassword("12345678");
-        existingUser.setRole(ADMIN);
+        existingUser.setRole(USER);
 
         User updatedUser = new User();
         updatedUser.setId("1");
         updatedUser.setName("FakeEdited name");
         updatedUser.setEmail("fakeEdited@gmail.com");
         updatedUser.setPassword("jhuwednucwnhcbh");
-        updatedUser.setRole(ADMIN);
+        updatedUser.setRole(USER);
 
         User raw = new User();
         raw.setName("FakeEdited name");
         raw.setEmail("fakeEdited@gmail.com");
         raw.setPassword("12345678");
-        raw.setRole(ADMIN);
+        raw.setRole(USER);
 
 
 
+        // when super admin is updating data
+        User userWhoIsUpdating = new User();
+        userWhoIsUpdating.setId("2");
+        userWhoIsUpdating.setName("Super name");
+        userWhoIsUpdating.setEmail("fake@gmail.com");
+        userWhoIsUpdating.setPassword("12345678");
+        userWhoIsUpdating.setRole(SUPER_ADMIN);
 
         when(userRepository.findById("1")).thenReturn(Optional.of(existingUser));
 
@@ -211,14 +221,38 @@ class UserServiceImplTest {
 
         when(userRepository.save(existingUser)).thenReturn(updatedUser);
 
-        User actualUser = userService.editUserById("1", raw);
+        when(jwtService.extractUsername(anyString())).thenReturn("superadmin@gmail.com");
+
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userWhoIsUpdating));
+
+
+        String header = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+        User actualUser = userService.editUserById("1", raw, header );
 
         assertAll(
                 () -> assertNotNull(actualUser),
                 () -> assertEquals("1", actualUser.getId()),
                 () -> assertEquals("fakeEdited@gmail.com", actualUser.getEmail()),
                 () -> assertEquals("FakeEdited name", actualUser.getName()),
-                () -> assertEquals(ADMIN.name(), actualUser.getRole().name())
+                () -> assertEquals(USER.name(), actualUser.getRole().name())
+        );
+
+
+        // when a user is updating data
+        userWhoIsUpdating.setId("1");
+        userWhoIsUpdating.setName("User name");
+        userWhoIsUpdating.setEmail("user@gmail.com");
+        userWhoIsUpdating.setPassword("12345678");
+        userWhoIsUpdating.setRole(USER);
+
+        User actualUser2 = userService.editUserById("1", raw, header );
+
+        assertAll(
+                () -> assertNotNull(actualUser2),
+                () -> assertEquals("1", actualUser2.getId()),
+                () -> assertEquals("fakeEdited@gmail.com", actualUser2.getEmail()),
+                () -> assertEquals("FakeEdited name", actualUser2.getName()),
+                () -> assertEquals(USER.name(), actualUser2.getRole().name())
         );
 
 

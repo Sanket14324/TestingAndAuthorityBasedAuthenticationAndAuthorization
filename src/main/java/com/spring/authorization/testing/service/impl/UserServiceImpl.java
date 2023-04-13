@@ -1,6 +1,7 @@
 package com.spring.authorization.testing.service.impl;
 
 
+import com.spring.authorization.testing.authoritiesAndRoles.Role;
 import com.spring.authorization.testing.model.User;
 import com.spring.authorization.testing.repository.UserRepository;
 import com.spring.authorization.testing.service.IUserService;
@@ -22,6 +23,9 @@ public class UserServiceImpl implements IUserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JWTService jwtService;
 
     @NotNull
     @Override
@@ -71,15 +75,32 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public User editUserById(String id, User user) {
-            User editUser = userRepository.findById(id).orElseThrow(() ->
-                    new RuntimeException("User Not Found with credentials - "+ id));
-            editUser.setEmail(user.getEmail());
-            editUser.setName(user.getName());
-            editUser.setRole(user.getRole());
-            editUser.setPassword(passwordEncoder.encode(user.getPassword()));
-            User finalUser = userRepository.save(editUser);
-            return finalUser;
+    public User editUserById(String id, User user, String header) {
+        // getting user from the token
+        String token = header.substring(7);
+        String email =  jwtService.extractUsername(token);
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if(existingUser.isPresent()){
+            // if User's role is User then check passed id and user's id is same or not to verify same user
+            // updating information
+
+            // and if the role is super admin then Allow to update
+            if((existingUser.get().getRole().equals(Role.USER) && existingUser.get().getId().equals(id)) ||
+                    existingUser.get().getRole().equals(Role.SUPER_ADMIN)){
+                User editUser = userRepository.findById(id).orElseThrow(() ->
+                        new RuntimeException("User Not Found with credentials - "+ id));
+                editUser.setEmail(user.getEmail());
+                editUser.setName(user.getName());
+                editUser.setRole(user.getRole());
+                editUser.setPassword(passwordEncoder.encode(user.getPassword()));
+                User finalUser = userRepository.save(editUser);
+                return finalUser;
+            }
+            else {
+                throw new RuntimeException("You are Unauthorized to update this user with Id - "+ id);
+            }
         }
+        throw new RuntimeException("You are Unauthorized to update this user with Id - "+ id);
+    }
     }
 

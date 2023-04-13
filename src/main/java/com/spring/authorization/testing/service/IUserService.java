@@ -19,5 +19,5 @@ public interface IUserService {
 
     User getUserByEmailOrId(String credentials);
 
-    User editUserById(String credentials, User user);
+    User editUserById(String credentials, User user, String header);
 }

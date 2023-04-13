@@ -149,9 +149,11 @@ class UserControllerTest {
         updatedUser.setPassword("123456789");
 
 
-        when(userService.editUserById("1", rawUser)).thenReturn(updatedUser);
+        String header = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
-        ResponseEntity<Object> responseUser = userController.putUserById("1", rawUser);
+        when(userService.editUserById("1", rawUser, header)).thenReturn(updatedUser);
+
+        ResponseEntity<Object> responseUser = userController.putUserById(header, "1", rawUser);
 
         UserDto actualUser  = (UserDto) responseUser.getBody();
 

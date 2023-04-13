@@ -68,10 +68,12 @@ public class UserController {
 
     }
 
+
     @PreAuthorize("hasAnyAuthority('user:update')")
-    @PutMapping("/{id}")
-    public ResponseEntity<Object> putUserById(@PathVariable String id, @RequestBody User user){
-        User editedUser = userServiceImpl.editUserById(id, user);
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<Object> putUserById(@RequestHeader("Authorization") String header, @PathVariable String id, @RequestBody User user){
+
+        User editedUser = userServiceImpl.editUserById(id, user, header);
         ModelMapper modelMapper = new ModelMapper();
         UserDto userDto = modelMapper.map(editedUser, UserDto.class);
         return ResponseEntity.ok(userDto);
