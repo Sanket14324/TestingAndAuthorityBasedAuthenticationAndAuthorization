@@ -4,11 +4,11 @@ package com.spring.authorization.testing.config;
 
 import com.spring.authorization.testing.filter.JWTFilter;
 import com.spring.authorization.testing.service.impl.UserDetailsServiceImpl;
-import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.access.AccessDeniedException;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -21,9 +21,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
+
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+
 
 @Configuration
 @EnableWebSecurity
@@ -44,6 +44,7 @@ public class AutoConfig {
         return httpSecurity.
                 csrf().disable()
                     .authorizeHttpRequests().requestMatchers("/api/user", "/api/user/login").permitAll().and()
+                .authorizeHttpRequests().requestMatchers("/swagger-ui.html", "/v3/api-docs","/v3/api-docs/**","/v2/api-docs", "/swagger-resources/**", "/swagger-ui/**", "/webjars/**").permitAll().and()
                 .authorizeHttpRequests().requestMatchers("/api/user/**", "/api/product/**", "/api/product").authenticated()
                 .and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -51,6 +52,7 @@ public class AutoConfig {
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();    }
+
 
 
     @Bean
@@ -70,16 +72,6 @@ public class AutoConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    @Bean
-    @ExceptionHandler(value = {AccessDeniedException.class})
-    public AccessDeniedHandler accessDeniedHandler() {
-        return (request, response, ex) -> {
-            response.setContentType("application/json;charset=UTF-8");
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.getWriter().write("{\"error\":\"Access denied. You do not have the necessary permissions.\"}");
-        };
     }
 
 }
